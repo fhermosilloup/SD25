@@ -41,7 +41,7 @@ module top_level(
 	
 	// VGA synchronizer
 	wire [9:0] x, y;
-	wire display_flag;
+	wire display_flag, end_of_frame;
 	VGASynchronizer VgaSync(
 		.pclk(Clk25MHz),
 		.rst(nrst),
@@ -49,7 +49,8 @@ module top_level(
 		.vcount(y),
 		.hsync(Hsync),
 		.vsync(Vsync),
-		.display(display_flag)
+		.display(display_flag),
+		.eof(end_of_frame)
 	);
 	
 	// VGA Pixel controller
