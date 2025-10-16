@@ -28,7 +28,7 @@ module VGASynchronizer(
     output wire hsync,
     output wire vsync,
     output wire display,
-    output wire eof,    // EndOfFrame
+    output wire eof    // EndOfFrame
 );
 	// VGA Constants (see vga timing table)
 	// - XMAX=800 (10bits)
