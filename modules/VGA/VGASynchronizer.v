@@ -27,11 +27,14 @@ module VGASynchronizer(
     output reg [9:0] vcount,
     output wire hsync,
     output wire vsync,
-    output wire display
+    output wire display,
+    output wire eof,    // EndOfFrame
 );
 	// VGA Constants (see vga timing table)
-	localparam SCREEN_HEIGHT = 480;
-    localparam SCREEN_WIDTH = 640;
+	// - XMAX=800 (10bits)
+	// - YMAX=525 (10bits)
+	localparam SCREEN_HEIGHT = 480;    // 9bits
+    localparam SCREEN_WIDTH = 640;     // 10bits 
 	localparam VGA_H_FRONT_PORCH = 16;
 	localparam VGA_H_SYNC_PULSE = 96;
 	localparam VGA_H_BACK_PORCH = 48;
@@ -73,5 +76,5 @@ module VGASynchronizer(
     assign hsync = (hcount > VGA_HSYNC_START-1 && hcount < VGA_HSYNC_END) ? VGA_HSYNC_POL : ~VGA_HSYNC_POL;
     assign vsync = (vcount > VGA_VSYNC_START-1 && vcount < VGA_VSYNC_END) ? VGA_VSYNC_POL : ~VGA_VSYNC_POL;
     assign display = (hcount < SCREEN_WIDTH && vcount < SCREEN_HEIGHT) & rst;
-    
+    assign eof = (hcount == SCREEN_WIDTH  && vcount == SCREEN_HEIGHT);
 endmodule
