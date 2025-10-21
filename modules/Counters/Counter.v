@@ -24,7 +24,7 @@ module Counter #(parameter NUM_BITS = 1)(
     input wire rst,
   	input wire en,
     output reg [$clog2(NUM_BITS)-1:0] q,
-	output reg rco
+	output wire rco
 );
     always @(posedge clk)
     begin
