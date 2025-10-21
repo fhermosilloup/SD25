@@ -22,6 +22,7 @@
 module CounterModN #(parameter N = 1)(
     input wire clk,
     input wire rst,
+	input wire en,
     output reg [$clog2(N)-1:0] q,
 	  output reg rco
 );
@@ -33,15 +34,16 @@ module CounterModN #(parameter N = 1)(
 			rco <= 0;
         end
         else
-			if(q == N-1)
-			begin
-				q <= 0;
-				rco <= 1;
-			end
-			else
-			begin
-				q <= q + 1;
-				rco <= 0;
-			end
+			if(en)
+				if(q == N-1)
+				begin
+					q <= 0;
+					rco <= 1;
+				end
+				else
+				begin
+					q <= q + 1;
+					rco <= 0;
+				end
     end
 endmodule
