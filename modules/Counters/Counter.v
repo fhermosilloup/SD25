@@ -26,7 +26,7 @@ module Counter #(parameter NUM_BITS = 1)(
     output reg [$clog2(NUM_BITS)-1:0] q,
 	output reg rco
 );
-    always @(posedge clk or negedge rst)
+    always @(posedge clk)
     begin
         if(!rst)
 		begin
