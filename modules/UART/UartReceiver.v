@@ -24,18 +24,20 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module UartReceiver #(parameter BRCLOCK_CYCLES=10)(
-	input wire clk,      	// Uart Clock
-	input wire rst,      	// Uart Reset
-	input wire rx,       	// RX Serial input
-	input wire pen,           // Parity Enabled flag
+module UartReceiver #(parameter CLK_FREQ_HZ=100000000, parameter BAUDRATE=9600)(
+	input wire clk,      	 // Uart Clock
+	input wire rst,      	 // Uart Reset
+	input wire rx,       	 // RX Serial input
+	input wire pen,          // Parity Enabled flag
 	input wire peven,        // Even Parity flag
 	output reg busy,         // Receiver busy flag
 	output reg data_ready,	 // Data ready flag
 	output reg perr,	     // Parity error flag
-  	output reg [7:0] dout, 	 // Data Output Register
-  	output reg [$clog2(BRCLOCK_CYCLES)-1:0] brcnt
+  	output reg [7:0] dout 	 // Data Output Register
 );
+    localparam integer BRCLOCK_CYCLES = (CLK_FREQ_HZ/BAUDRATE + 0.5);
+    
+    // fsm state definition
 	localparam IDLE_STATE = 4'b0000;
 	localparam START_STATE = 4'b0001;
 	localparam D0_STATE = 4'b0010;
@@ -73,7 +75,7 @@ module UartReceiver #(parameter BRCLOCK_CYCLES=10)(
     end 
 	
 	// Baudrate tick generator
-	//reg [$clog2(BRCLOCK_CYCLES)-1:0] brcnt = 0;
+	reg [$clog2(BRCLOCK_CYCLES)-1:0] brcnt = 0;
 	reg brtick = 0;
   	reg brcnt_rst = 0;
 	always @(posedge clk)
@@ -111,7 +113,6 @@ module UartReceiver #(parameter BRCLOCK_CYCLES=10)(
 			state <= IDLE_STATE;
 			data_reg <= 0;
 		  	dout <= 0;
-			brcnt_en <= 0;
 		  	brcnt_rst <= 0;
 		end
 		else
