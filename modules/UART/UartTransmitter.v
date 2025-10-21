@@ -16,28 +16,18 @@
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
-// This file contains the UART Receiver.  This receiver is able to
-// receive 8 bits of serial data, one start bit, one stop bit,
-// and no parity bit.  When receive is complete o_rx_dv will be
-// driven high for one clock cycle.
-// 
-// Set Parameter CLKS_PER_BIT as follows:
-// CLKS_PER_BIT = (Frequency of i_Clock)/(Frequency of UART)
-// Example: 10 MHz Clock, 115200 baud UART
-// (10000000)/(115200) = 87
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module UartTransmitter (
-  input wire clk,         // Clock
-  input wire rst,      	  // Reset
-	input wire brclk,      // BaudRate clock
+module UartTransmitter #(parameter BRCLOCK_CYCLES=10)(
+	input wire clk,         // Clock
+	input wire rst,      	  // Reset
 	input wire en,         // Habilitar transmisión
 	input wire pen,        // Habilitador de paridad
 	input wire peven,      // Paridad par
 	input wire [7:0] din,  // Datos a transmitir
 	output reg tx,         // Salida serial TX
-  output reg busy        // Bandera de transmisión en curso 
+	output reg busy        // Bandera de transmisión en curso 
 );
 	localparam IDLE_STATE = 4'b0000;
 	localparam START_STATE = 4'b0001;
@@ -51,8 +41,35 @@ module UartTransmitter (
 	localparam D7_STATE = 4'b1001;
 	localparam PARITY_STATE = 4'b1010;
 	localparam STOP_STATE  = 4'b1011;
-
 	
+	// BaudRate clock generator
+	reg [$clog2(BRCLOCK_CYCLES)-1:0] brcnt = 0;
+	reg brtick = 0;
+	reg brcnt_en = 0;
+	always @(posedge clk)
+	begin
+		if(!rst)
+		begin
+			brcnt <= 0;
+			brtick <= 0;
+		end
+		else
+		begin
+			if(brcnt_en)
+				if(brcnt == BRCLOCK_CYCLES-1)
+				begin
+					brcnt <= 0;
+					brtick <= 1;
+				end
+				else
+				begin
+					brcnt <= brcnt + 1;
+					brtick <= 0;
+				end
+		end
+	end
+	
+	// UartTransmitter FSM
 	reg [7:0] data_reg = 0;    // Registro de datos
 	reg [3:0] state = IDLE_STATE;
    
@@ -64,6 +81,8 @@ module UartTransmitter (
 			busy <= 0;
 			state <= IDLE_STATE;
 			data_reg <= 0;
+		  	tx <= 1;
+			brcnt_en <= 0;
 		end
 		else
 		begin
@@ -76,15 +95,19 @@ module UartTransmitter (
 					  state <= START_STATE;
 					  busy <= 1;
 					  data_reg <= din;
+					  brcnt_en <= 1;
 					end
 					else
+					begin
 					  state <= IDLE_STATE;
+					  brcnt_en <= 0;
+					end
 				end
 				
 				START_STATE:
 				begin
 					tx <= 0;
-					if(brclk)
+					if(brtick)
 						state <= D0_STATE;
 					else
 						state <= START_STATE;
@@ -94,7 +117,7 @@ module UartTransmitter (
 				D0_STATE:
 				begin
 					tx <= data_reg[0];
-					if(brclk)
+					if(brtick)
 						state <= D1_STATE;
 					else
 						state <= D0_STATE;
@@ -103,7 +126,7 @@ module UartTransmitter (
 				D1_STATE :
 				begin
 					tx <= data_reg[1];
-					if(brclk)
+					if(brtick)
 						state <= D2_STATE;
 					else
 						state <= D1_STATE;
@@ -112,7 +135,7 @@ module UartTransmitter (
 				D2_STATE :
 				begin
 					tx <= data_reg[2];
-					if(brclk)
+					if(brtick)
 						state <= D3_STATE;
 					else
 						state <= D2_STATE;
@@ -121,7 +144,7 @@ module UartTransmitter (
 				D3_STATE :
 				begin
 					tx <= data_reg[3];
-					if(brclk)
+					if(brtick)
 						state <= D4_STATE;
 					else
 						state <= D3_STATE;
@@ -130,7 +153,7 @@ module UartTransmitter (
 				D4_STATE :
 				begin
 					tx <= data_reg[4];
-					if(brclk)
+					if(brtick)
 						state <= D5_STATE;
 					else
 						state <= D4_STATE;
@@ -139,7 +162,7 @@ module UartTransmitter (
 				D5_STATE :
 				begin
 					tx <= data_reg[5];
-					if(brclk)
+					if(brtick)
 						state <= D6_STATE;
 					else
 						state <= D5_STATE;
@@ -148,7 +171,7 @@ module UartTransmitter (
 				D6_STATE :
 				begin
 					tx <= data_reg[6];
-					if(brclk)
+					if(brtick)
 						state <= D7_STATE;
 					else
 						state <= D6_STATE;
@@ -157,7 +180,7 @@ module UartTransmitter (
 				D7_STATE :
 				begin
 					tx <= data_reg[7];
-					if(brclk)
+					if(brtick)
 					begin
 						if(pen)
 							state <= PARITY_STATE;
@@ -176,7 +199,7 @@ module UartTransmitter (
 					else
 					   tx <= ~(data_reg[0] ^ data_reg[1] ^ data_reg[2] ^ data_reg[3] ^ data_reg[4] ^ data_reg[5] ^ data_reg[6] ^ data_reg[7]);
 					
-					if(brclk)
+					if(brtick)
 						state <= STOP_STATE;
 					else
 						state <= PARITY_STATE;
@@ -187,13 +210,14 @@ module UartTransmitter (
 				STOP_STATE:
 				begin
 					tx <= 1;
-					if(brclk)
+					if(brtick)
 					begin
-						state <= STOP_STATE;
+						state <= IDLE_STATE;
 						busy <= 0;
+						brcnt_en <= 0;
 					end
 					else
-						state <= PARITY_STATE;
+						state <= STOP_STATE;
 				end
 				
 				default : state <= IDLE_STATE;
