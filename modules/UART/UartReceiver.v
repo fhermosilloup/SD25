@@ -24,17 +24,16 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module UartReceiver(
-  input wire clk,      	// Uart Clock
-  input wire rst,      	// Uart Reset
-  input wire rx,       	// RX Serial input
-	input wire brclk_x2,    // Baudrate clock x2
+module UartReceiver #(parameter BRCLOCK_CYCLES=10)(
+	input wire clk,      	// Uart Clock
+	input wire rst,      	// Uart Reset
+	input wire rx,       	// RX Serial input
 	input wire pen,           // Parity Enabled flag
 	input wire peven,        // Even Parity flag
 	output reg busy,         // Receiver busy flag
-  output reg data_ready,	 // Data ready flag
+	output reg data_ready,	 // Data ready flag
 	output reg perr,	     // Parity error flag
-  output reg [7:0] dout 	 // Data Output Register
+	output reg [7:0] dout 	 // Data Output Register
 );
 	localparam IDLE_STATE = 4'b0000;
 	localparam START_STATE = 4'b0001;
@@ -71,7 +70,36 @@ module UartReceiver(
 			rx_stable   <= rx_prev;
 		end
     end 
-   
+	
+	// Baudrate tick generator
+	reg [$clog2(BRCLOCK_CYCLES)-1:0] brcnt = 0;
+	reg brtick = 0;
+	reg brcnt_en = 0;
+	always @(posedge clk)
+	begin
+		if(!rst)
+		begin
+			brcnt <= 0;
+			brtick <= 0;
+		end
+		else
+		begin
+			if(brcnt_en)
+				if(brcnt == BRCLOCK_CYCLES-1)
+				begin
+					brcnt <= 0;
+					brtick <= 0;
+				end
+				else
+				begin
+					brcnt <= brcnt + 1;
+					if(brcnt == BRCLOCK_CYCLES/2 - 1)
+						brtick <= 1;
+					else
+						brtick <= 0;
+				end
+		end
+	end
     // Purpose: Control RX state machine
     always @(posedge clk)
     begin
@@ -82,6 +110,8 @@ module UartReceiver(
 			perr <= 0;
 			state <= IDLE_STATE;
 			data_reg <= 0;
+		  	dout <= 0;
+			brcnt_en <= 0;
 		end
 		else
 		begin
@@ -94,18 +124,20 @@ module UartReceiver(
 					begin
 					  state <= START_STATE;
 					  busy <= 1;
+					  brcnt_en <= 1;
 					end
 					else
 					begin
 					  state <= IDLE_STATE;
 					  busy <= 0;
+					  brcnt_en <= 0;
 					end
 				end
 				 
 				// Check middle of start bit to make sure it's still low
 				START_STATE :
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						if (rx_stable == 1'b0)
 						begin
@@ -124,7 +156,7 @@ module UartReceiver(
 				// Wait CYCLES_PER_BIT-1 clock cycles to sample serial data at the middle
 				D0_STATE :
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						data_reg[0] <= rx_stable;
 						state <= D1_STATE;
@@ -135,7 +167,7 @@ module UartReceiver(
 				
 				D1_STATE :
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						data_reg[1] <= rx_stable;
 						state <= D2_STATE;
@@ -146,7 +178,7 @@ module UartReceiver(
 				
 				D2_STATE :
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						data_reg[2] <= rx_stable;
 						state <= D3_STATE;
@@ -157,7 +189,7 @@ module UartReceiver(
 				
 				D3_STATE :
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						data_reg[3] <= rx_stable;
 						state <= D4_STATE;
@@ -168,7 +200,7 @@ module UartReceiver(
 				
 				D4_STATE :
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						data_reg[4] <= rx_stable;
 						state <= D5_STATE;
@@ -179,7 +211,7 @@ module UartReceiver(
 				
 				D5_STATE :
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						data_reg[5] <= rx_stable;
 						state <= D6_STATE;
@@ -190,7 +222,7 @@ module UartReceiver(
 				
 				D6_STATE :
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						data_reg[6] <= rx_stable;
 						state <= D7_STATE;
@@ -201,7 +233,7 @@ module UartReceiver(
 				
 				D7_STATE :
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						data_reg[7] <= rx_stable;
 						if(pen)
@@ -216,7 +248,7 @@ module UartReceiver(
 				// Stay here 1 clock
 				PARITY_STATE:
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						// Check parity
 						if(peven)
@@ -238,10 +270,11 @@ module UartReceiver(
 				// Receive Stop bit state
 				STOP_STATE:
 				begin
-					if (brclk_x2)
+					if (brtick)
 					begin
 						dout <= data_reg;
 						data_ready <= 1;
+						brcnt_en <= 0;
 						busy <= 0;
 						state <= IDLE_STATE;
 					end
