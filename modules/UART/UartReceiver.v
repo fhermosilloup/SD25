@@ -33,7 +33,8 @@ module UartReceiver #(parameter BRCLOCK_CYCLES=10)(
 	output reg busy,         // Receiver busy flag
 	output reg data_ready,	 // Data ready flag
 	output reg perr,	     // Parity error flag
-	output reg [7:0] dout 	 // Data Output Register
+  	output reg [7:0] dout, 	 // Data Output Register
+  	output reg [$clog2(BRCLOCK_CYCLES)-1:0] brcnt
 );
 	localparam IDLE_STATE = 4'b0000;
 	localparam START_STATE = 4'b0001;
@@ -72,32 +73,31 @@ module UartReceiver #(parameter BRCLOCK_CYCLES=10)(
     end 
 	
 	// Baudrate tick generator
-	reg [$clog2(BRCLOCK_CYCLES)-1:0] brcnt = 0;
+	//reg [$clog2(BRCLOCK_CYCLES)-1:0] brcnt = 0;
 	reg brtick = 0;
-	reg brcnt_en = 0;
+  	reg brcnt_rst = 0;
 	always @(posedge clk)
 	begin
-		if(!rst)
+	  	if(!rst | !brcnt_rst)
 		begin
 			brcnt <= 0;
 			brtick <= 0;
 		end
 		else
 		begin
-			if(brcnt_en)
-				if(brcnt == BRCLOCK_CYCLES-1)
-				begin
-					brcnt <= 0;
-					brtick <= 0;
-				end
-				else
-				begin
-					brcnt <= brcnt + 1;
-					if(brcnt == BRCLOCK_CYCLES/2 - 1)
-						brtick <= 1;
-					else
-						brtick <= 0;
-				end
+		  if(brcnt == BRCLOCK_CYCLES-1)
+			begin
+			  brcnt <= 0;
+			  brtick <= 0;
+			end
+		  else
+			begin
+			  brcnt <= brcnt + 1;
+			  if(brcnt == BRCLOCK_CYCLES/2 - 1)
+				brtick <= 1;
+			  else
+				brtick <= 0;
+			end
 		end
 	end
     // Purpose: Control RX state machine
@@ -112,6 +112,7 @@ module UartReceiver #(parameter BRCLOCK_CYCLES=10)(
 			data_reg <= 0;
 		  	dout <= 0;
 			brcnt_en <= 0;
+		  	brcnt_rst <= 0;
 		end
 		else
 		begin
@@ -124,13 +125,13 @@ module UartReceiver #(parameter BRCLOCK_CYCLES=10)(
 					begin
 					  state <= START_STATE;
 					  busy <= 1;
-					  brcnt_en <= 1;
+					  brcnt_rst <= 1;
 					end
 					else
 					begin
 					  state <= IDLE_STATE;
 					  busy <= 0;
-					  brcnt_en <= 0;
+					  brcnt_rst <= 0;
 					end
 				end
 				 
@@ -274,7 +275,7 @@ module UartReceiver #(parameter BRCLOCK_CYCLES=10)(
 					begin
 						dout <= data_reg;
 						data_ready <= 1;
-						brcnt_en <= 0;
+						brcnt_rst <= 0;
 						busy <= 0;
 						state <= IDLE_STATE;
 					end
