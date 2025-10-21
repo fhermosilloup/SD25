@@ -45,7 +45,7 @@ module UartTransmitter #(parameter BRCLOCK_CYCLES=10)(
 	// BaudRate clock generator
 	reg [$clog2(BRCLOCK_CYCLES)-1:0] brcnt = 0;
 	reg brtick = 0;
-	reg brcnt_en = 0;
+	reg brcnt_rst = 0;
 	always @(posedge clk)
 	begin
 		if(!rst)
@@ -55,17 +55,16 @@ module UartTransmitter #(parameter BRCLOCK_CYCLES=10)(
 		end
 		else
 		begin
-			if(brcnt_en)
-				if(brcnt == BRCLOCK_CYCLES-1)
-				begin
-					brcnt <= 0;
-					brtick <= 1;
-				end
-				else
-				begin
-					brcnt <= brcnt + 1;
-					brtick <= 0;
-				end
+			if(brcnt == BRCLOCK_CYCLES-1)
+			begin
+				brcnt <= 0;
+				brtick <= 1;
+			end
+			else
+			begin
+				brcnt <= brcnt + 1;
+				brtick <= 0;
+			end
 		end
 	end
 	
@@ -82,7 +81,7 @@ module UartTransmitter #(parameter BRCLOCK_CYCLES=10)(
 			state <= IDLE_STATE;
 			data_reg <= 0;
 		  	tx <= 1;
-			brcnt_en <= 0;
+			brcnt_rst <= 0;
 		end
 		else
 		begin
@@ -95,12 +94,12 @@ module UartTransmitter #(parameter BRCLOCK_CYCLES=10)(
 					  state <= START_STATE;
 					  busy <= 1;
 					  data_reg <= din;
-					  brcnt_en <= 1;
+					  brcnt_rst <= 1;
 					end
 					else
 					begin
 					  state <= IDLE_STATE;
-					  brcnt_en <= 0;
+					  brcnt_rst <= 0;
 					end
 				end
 				
@@ -214,7 +213,7 @@ module UartTransmitter #(parameter BRCLOCK_CYCLES=10)(
 					begin
 						state <= IDLE_STATE;
 						busy <= 0;
-						brcnt_en <= 0;
+						brcnt_rst <= 0;
 					end
 					else
 						state <= STOP_STATE;
