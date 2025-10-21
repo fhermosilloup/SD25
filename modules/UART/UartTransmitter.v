@@ -3,6 +3,28 @@
 // Company: 
 // Engineer: 
 // 
+// Create Date: 21.10.2025 07:58:49
+// Design Name: 
+// Module Name: UartTransmitter
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
 // Create Date: 15.09.2025 12:56:40
 // Design Name: 
 // Module Name: UartTransmitter
@@ -19,9 +41,9 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module UartTransmitter #(parameter BRCLOCK_CYCLES=10)(
-	input wire clk,         // Clock
-	input wire rst,      	  // Reset
+module UartTransmitter #(parameter CLK_FREQ_HZ=100000000, parameter BAUDRATE=9600)(
+	input wire clk,        // Clock
+	input wire rst,        // Reset
 	input wire en,         // Habilitar transmisión
 	input wire pen,        // Habilitador de paridad
 	input wire peven,      // Paridad par
@@ -29,6 +51,9 @@ module UartTransmitter #(parameter BRCLOCK_CYCLES=10)(
 	output reg tx,         // Salida serial TX
 	output reg busy        // Bandera de transmisión en curso 
 );
+    localparam integer BRCLOCK_CYCLES = (CLK_FREQ_HZ/BAUDRATE + 0.5);
+    
+    // fsm state definition
 	localparam IDLE_STATE = 4'b0000;
 	localparam START_STATE = 4'b0001;
 	localparam D0_STATE = 4'b0010;
