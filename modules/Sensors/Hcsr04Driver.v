@@ -3,10 +3,10 @@ module Hcsr04Driver #(parameter SAMPLING_CYLES = 50000, TIMEOUT_CYLES = 25000)(
   input wire rst,
 	input wire en,
   input wire echo,
-  output wire trig,
+  output reg trig,
   output reg data_ready,
 	output reg timeout_err,
-  output wire [$clog2(SAMPLING_CYLES)-1:0] tof
+  output reg [$clog2(SAMPLING_CYLES)-1:0] tof
 );
 	
 	/* Filtro Estabilidad ===========================================*/
