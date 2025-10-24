@@ -1,3 +1,25 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 24.10.2025 01:28:41
+// Design Name: 
+// Module Name: QuadDecoder
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
 module QuadDecoder #(parameter PPR = 334)(
 	input wire clk,
 	input wire rst,
@@ -21,19 +43,19 @@ module QuadDecoder #(parameter PPR = 334)(
 	begin
 		if(!rst)
 		begin
-			qa_prev = 0;
-			qa_stable = 0;
-			qb_prev = 0;
-			qb_stable = 0;
+			qa_prev <= 0;
+			qa_stable <= 0;
+			qb_prev <= 0;
+			qb_stable <= 0;
 		end
 		else
 		begin
 			// Filtrar Qa
-			qa_prev = qa;
-			qa_stable = qa_prev;
+			qa_prev <= qa;
+			qa_stable <= qa_prev;
 			// Filtrar Qb
-			qb_prev = qb;
-			qb_stable = qb_prev;
+			qb_prev <= qb;
+			qb_stable <= qb_prev;
 		end
 	end
 	
@@ -48,6 +70,7 @@ module QuadDecoder #(parameter PPR = 334)(
 			cnt <= 0;
 			dir <= 0;
 			pos <= 0;
+
 		end
 		else
 		begin
