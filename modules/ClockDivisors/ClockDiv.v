@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module ClockDiv #(parameter FREQ_IN = 100_000_000, parameter FREQ_OUT = 1)(
+module ClockDiv #(parameter FREQ_IN = 100000000, parameter FREQ_OUT = 1)(
     input wire clk,
     input wire rst,
     output reg clkout
