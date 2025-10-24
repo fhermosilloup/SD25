@@ -51,7 +51,7 @@ module UartTransmitter #(parameter CLK_FREQ_HZ=100000000, parameter BAUDRATE=960
 	reg brcnt_rst = 0;
 	always @(posedge clk)
 	begin
-		if(!rst)
+		if(!rst | !brcnt_rst)
 		begin
 			brcnt <= 0;
 			brtick <= 0;
