@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`timescale 1ns / 1ns
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
 // Engineer: 
@@ -16,7 +16,7 @@
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
-// https://madlittlemods.github.io/vga-simulator/
+// 
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -57,10 +57,10 @@ module vga_tb();
             $finish;
         end
         rst = 0;
-        clk = 0;
+        clk = 1;
         #20;
         rst = 1;
-        #17000000;
+        #35000000;
         $fclose(file);
         $display("Archivo cerrado correctamente.");
         $finish;
@@ -70,7 +70,7 @@ module vga_tb();
     // Este bloque se activa con cada flanco positivo del reloj de píxel
     always @(posedge clk) begin
         // Escribir tiempo simulado (en ns) y señales
-        $fwrite(file, "%0t ns: %b %b %04b %04b %04b\n", 
+        $fwrite(file, "%0d,%b,%b,%04b,%04b,%04b\n", 
             $time,          // tiempo actual en la simulación
             hsync,          // señal de sincronía horizontal
             vsync,          // señal de sincronía vertical
