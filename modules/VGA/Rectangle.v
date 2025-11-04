@@ -21,8 +21,8 @@
 
 
 module Rectangle(
-	input wire x,
-	input wire y,
+	input wire [9:0] x,
+	input wire [9:0] y,
 	input wire display,
 	input wire [9:0] x0, // 0-799
 	input wire [9:0] y0, // 0-524
